@@ -111,46 +111,60 @@ jobs:
           path: android/app/build/outputs/apk/release/app-release.apk
           retention-days: 7
 
-  build_ios:
-    runs-on: macos-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      # build_ios:
+      #   runs-on: macos-latest
+      #   steps:
+      #     - name: Checkout repository
+      #       uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
+      #     - name: Set up Node.js
+      #       uses: actions/setup-node@v4
+      #       with:
+      #         node-version: '20'
+      #         cache: 'npm'
 
-      - name: Install dependencies
-        run: |
-          npm ci
-          cd ios && pod install && cd ..
+      #     - name: Install dependencies
+      #       run: |
+      #         npm ci
+      #         cd ios && pod install && cd ..
 
+      #     - name: Build iOS archive
+      #       run: |
+      #         cd ios
+      #         xcodebuild -workspace YourApp.xcworkspace \
+      #           -scheme YourApp \
+      #           -sdk iphoneos \
+      #           -configuration Release \
+      #           archive \
+      #           -archivePath "$PWD/build/YourApp.xcarchive"
+
+      #         xcodebuild -exportArchive \
+      #           -archivePath "$PWD/build/YourApp.xcarchive" \
+      #           -exportPath "$PWD/build/ipa" \
+      #           -exportOptionsPlist YourApp/ExportOptions.plist
+      #         cd ..
+
+      #     - name: Upload iOS IPA artifact
+      #       uses: actions/upload-artifact@v4
+      #       with:
+      #         name: ios-ipa
+      #         path: ios/build/ipa/*.ipa
+      #         retention-days: 7
       - name: Build iOS archive
         run: |
           cd ios
-          xcodebuild -workspace YourApp.xcworkspace \
-            -scheme YourApp \
+          xcodebuild -workspace Example_CI_CD.xcworkspace \   # ← CHANGE TO YOUR REAL WORKSPACE NAME
+            -scheme Example_CI_CD \                           # ← CHANGE TO YOUR REAL SCHEME NAME
             -sdk iphoneos \
             -configuration Release \
             archive \
-            -archivePath "$PWD/build/YourApp.xcarchive"
+            -archivePath "$PWD/build/Example_CI_CD.xcarchive"  # ← optional: match name
 
           xcodebuild -exportArchive \
-            -archivePath "$PWD/build/YourApp.xcarchive" \
+            -archivePath "$PWD/build/Example_CI_CD.xcarchive" \
             -exportPath "$PWD/build/ipa" \
-            -exportOptionsPlist YourApp/ExportOptions.plist
+            -exportOptionsPlist Example_CI_CD/ExportOptions.plist   # ← CHANGE if plist is in different subfolder
           cd ..
-
-      - name: Upload iOS IPA artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ios-ipa
-          path: ios/build/ipa/*.ipa
-          retention-days: 7
-
   deploy:
     runs-on: ubuntu-latest
     needs: [build_android, build_ios]
