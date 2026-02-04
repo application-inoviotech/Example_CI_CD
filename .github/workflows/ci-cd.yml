@@ -91,25 +91,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Create Android directories for bundle
-        run: |
-          mkdir -p android/app/src/main/assets
-          mkdir -p android/app/src/main/res
+      # This is optional but harmless — ensures the folder exists if Metro needs to write there
+      - name: Ensure Android assets directory exists
+        run: mkdir -p android/app/src/main/assets
 
-      - name: Generate release JS bundle and assets
-        run: |
-          npx react-native bundle \
-            --platform android \
-            --dev false \
-            --reset-cache \
-            --entry-file index.js \           # change to index.tsx / App.tsx / src/index.js if needed
-            --bundle-output android/app/src/main/assets/index.android.bundle \
-            --assets-dest android/app/src/main/res
+      # NO manual bundle step here — remove it completely
+      # Gradle will run Metro bundling during assembleRelease
 
-      - name: Build Android APK
+      - name: Build Android APK (Release)
         run: |
           cd android
-          ./gradlew assembleRelease
+          ./gradlew assembleRelease --stacktrace --info   # --stacktrace + --info = better debug logs if fails
           cd ..
 
       - name: Upload APK artifact
@@ -118,46 +110,45 @@ jobs:
           name: android-apk
           path: android/app/build/outputs/apk/release/app-release.apk
           retention-days: 7
+  # build_ios:
+  #   runs-on: macos-latest
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
 
-  build_ios:
-    runs-on: macos-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+  #     - name: Set up Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: '20'
+  #         cache: 'npm'
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
+  #     - name: Install dependencies
+  #       run: |
+  #         npm ci
+  #         cd ios && pod install && cd ..
 
-      - name: Install dependencies
-        run: |
-          npm ci
-          cd ios && pod install && cd ..
+  #     - name: Build iOS archive
+  #       run: |
+  #         cd ios
+  #         xcodebuild -workspace YourApp.xcworkspace \
+  #           -scheme YourApp \
+  #           -sdk iphoneos \
+  #           -configuration Release \
+  #           archive \
+  #           -archivePath "$PWD/build/YourApp.xcarchive"
 
-      - name: Build iOS archive
-        run: |
-          cd ios
-          xcodebuild -workspace YourApp.xcworkspace \
-            -scheme YourApp \
-            -sdk iphoneos \
-            -configuration Release \
-            archive \
-            -archivePath "$PWD/build/YourApp.xcarchive"
+  #         xcodebuild -exportArchive \
+  #           -archivePath "$PWD/build/YourApp.xcarchive" \
+  #           -exportPath "$PWD/build/ipa" \
+  #           -exportOptionsPlist YourApp/ExportOptions.plist
+  #         cd ..
 
-          xcodebuild -exportArchive \
-            -archivePath "$PWD/build/YourApp.xcarchive" \
-            -exportPath "$PWD/build/ipa" \
-            -exportOptionsPlist YourApp/ExportOptions.plist
-          cd ..
-
-      - name: Upload iOS IPA artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ios-ipa
-          path: ios/build/ipa/*.ipa
-          retention-days: 7
+  #     - name: Upload iOS IPA artifact
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: ios-ipa
+  #         path: ios/build/ipa/*.ipa
+  #         retention-days: 7
 
   deploy:
     runs-on: ubuntu-latest
@@ -172,22 +163,22 @@ jobs:
         with:
           name: android-apk
 
-      - name: Deploy to Google Play (Android)
-        run: |
-          echo "Deploying Android APK to Google Play..."
-          # Replace the line below with your actual Fastlane or other deployment command
-          # Example: bundle exec fastlane supply --apk android-apk/app-release.apk
-          # For now keeping placeholder
-          ls -la android-apk/
+      # - name: Deploy to Google Play (Android)
+      #   run: |
+      #     echo "Deploying Android APK to Google Play..."
+      #     # Replace the line below with your actual Fastlane or other deployment command
+      #     # Example: bundle exec fastlane supply --apk android-apk/app-release.apk
+      #     # For now keeping placeholder
+      #     ls -la android-apk/
 
-      - name: Download iOS IPA
-        uses: actions/download-artifact@v4
-        with:
-          name: ios-ipa
+      # - name: Download iOS IPA
+      #   uses: actions/download-artifact@v4
+      #   with:
+      #     name: ios-ipa
 
-      - name: Deploy to App Store (iOS)
-        run: |
-          echo "Deploying iOS IPA to App Store..."
-          # Replace with your actual Fastlane or other deployment command
-          # Example: bundle exec fastlane deliver --ipa ios-ipa/*.ipa
-          ls -la ios-ipa/
+      # - name: Deploy to App Store (iOS)
+      #   run: |
+      #     echo "Deploying iOS IPA to App Store..."
+      #     # Replace with your actual Fastlane or other deployment command
+      #     # Example: bundle exec fastlane deliver --ipa ios-ipa/*.ipa
+      #     ls -la ios-ipa/
