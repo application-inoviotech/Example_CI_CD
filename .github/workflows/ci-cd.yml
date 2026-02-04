@@ -26,6 +26,56 @@ jobs:
       - name: Run tests
         run: npm test
 
+  # build_android:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+
+  #     - name: Set up Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: '20'
+  #         cache: 'npm'
+
+  #     - name: Install dependencies
+  #       run: npm ci
+
+  #     - name: Create Android assets directory
+  #       run: mkdir -p android/app/src/main/assets
+
+  #     # - name: Generate release JS bundle and assets
+  #     #   run: |
+  #     #     npx react-native bundle \
+  #     #       --platform android \
+  #     #       --dev false \
+  #     #       --entry-file index.js \           # ← change to index.tsx if your entry file is .tsx
+  #     #       --bundle-output android/app/src/main/assets/index.android.bundle \
+  #     #       --assets-dest android/app/src/main/res
+  #     - name: Generate release JS bundle and assets
+  #       working-directory: . # ← forces cwd to repo root (redundant but safe)
+  #       run: |
+  #         npx react-native bundle \
+  #           --platform android \
+  #           --dev false \
+  #           --entry-file index.js \
+  #           --bundle-output ./android/app/src/main/assets/index.android.bundle \
+  #           --assets-dest ./android/app/src/main/res \
+  #           --root .   # ← explicitly set project root to current dir
+
+  #     - name: Build Android APK
+  #       run: |
+  #         cd android
+  #         ./gradlew assembleRelease
+  #         cd ..
+
+  #     - name: Upload APK artifact
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: android-apk
+  #         path: android/app/build/outputs/apk/release/app-release.apk
+  #         retention-days: 7
+
   build_android:
     runs-on: ubuntu-latest
     steps:
@@ -41,15 +91,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Create Android assets directory
-        run: mkdir -p android/app/src/main/assets
+      - name: Create Android directories for bundle
+        run: |
+          mkdir -p android/app/src/main/assets
+          mkdir -p android/app/src/main/res
 
       - name: Generate release JS bundle and assets
         run: |
           npx react-native bundle \
             --platform android \
             --dev false \
-            --entry-file index.js \           # ← change to index.tsx if your entry file is .tsx
+            --reset-cache \
+            --entry-file index.js \           # change to index.tsx / App.tsx / src/index.js if needed
             --bundle-output android/app/src/main/assets/index.android.bundle \
             --assets-dest android/app/src/main/res
 
