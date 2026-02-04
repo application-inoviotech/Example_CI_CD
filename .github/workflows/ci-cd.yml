@@ -3,7 +3,7 @@ name: React Native CI/CD Pipeline
 on:
   push:
     branches:
-      - master # Trigger on pushing to the master branch
+      - main # Trigger on pushing to the main branch
 
 jobs:
   setup:
